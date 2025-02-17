@@ -4,31 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="222d0505-4760-4266-8299-962043d61d5e" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.jar" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.properties" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gradlew" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gradlew.bat" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings.gradle" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/example/Main.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/parking/ParkingFloor.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/parking/ParkingLotService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/parking/ParkingResult.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/parking/ParkingSpot.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/parking/Solution.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/parking/Vehicle.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/parking/VehicleType.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/parking/readme.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/ticket_booking/readme.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/website_visit_counter/readme.md" afterDir="false" />
-    </list>
+    <list default="true" id="222d0505-4760-4266-8299-962043d61d5e" name="Changes" comment="lld practice" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -106,11 +82,24 @@
       <workItem from="1739517388656" duration="3979000" />
       <workItem from="1739639215479" duration="6520000" />
       <workItem from="1739773628646" duration="938000" />
-      <workItem from="1739775484513" duration="1845000" />
+      <workItem from="1739775484513" duration="2389000" />
     </task>
+    <task id="LOCAL-00001" summary="lld practice">
+      <option name="closed" value="true" />
+      <created>1739777492726</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1739777492726</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="lld practice" />
+    <option name="LAST_COMMIT_MESSAGE" value="lld practice" />
   </component>
 </project>
