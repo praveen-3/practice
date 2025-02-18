@@ -4,17 +4,21 @@ import java.util.*;
 
 public class Solution implements Q002SmartElevatorGroupInterface {
     int floors, liftsCount;
-    Helper02 helper ;
-    private Lift lifts[];
+    Helper02 helper;
+    private Lift[] lifts;
+    private RequestManager requestManager;
 
     public Solution(){}
 
     public void init(int floors, int lifts, Helper02 helper) {
         this.floors = floors;
-        this.liftsCount =lifts;
+        this.liftsCount = lifts;
         this.helper = helper;
         this.lifts = new Lift[lifts];
-        for(int i=0;i<lifts;i++) this.lifts[i]= new Lift();
+        this.requestManager = new RequestManager(this.lifts);
+        for(int i = 0; i < lifts; i++) {
+            this.lifts[i] = new Lift(i, requestManager);
+        }
         // helper.println("Lift system initialized ...");
     }
 
@@ -25,24 +29,8 @@ public class Solution implements Q002SmartElevatorGroupInterface {
      * - see Question details for cases when a lift can't be assigned to a user.
      */
     public int requestLift(int startFloor, int destinationFloor) {
-        if(startFloor==destinationFloor) return -1;
-        int liftId = -1;
-        int timeToReachStart=1000*1000;
-        char direction = startFloor<destinationFloor?'U':'D';
-        for(int currentLiftIndex = 0; currentLiftIndex< liftsCount; currentLiftIndex++){
-            Lift lift = lifts[currentLiftIndex];
-            int reachStart = lift.getTimeToReachFloor(startFloor, direction);
-            int reachDestination = lift.getTimeToReachFloor(destinationFloor, direction);
-            if(reachStart<0 || reachDestination<0 || reachStart>timeToReachStart) continue;
-            if(!lift.hasSpace(startFloor, destinationFloor)) continue;
-            if(reachStart<timeToReachStart){
-                liftId=currentLiftIndex;
-                timeToReachStart=reachStart;
-            }
-        }
-        if(liftId>=0 && liftId< liftsCount)
-            lifts[liftId].addRequest(startFloor, destinationFloor);
-        return liftId;
+        if(startFloor == destinationFloor) return -1;
+        return requestManager.addRequest(startFloor, destinationFloor);
     }
 
     /**
@@ -51,8 +39,10 @@ public class Solution implements Q002SmartElevatorGroupInterface {
      * we use this time rather than java.util.Date().time
      */
     public void tick() {
-        for(int i = 0; i< liftsCount; i++)
+        requestManager.optimizeRequests();
+        for(int i = 0; i < liftsCount; i++) {
             lifts[i].updateLiftState();
+        }
     }
 
     /**
@@ -91,17 +81,20 @@ public class Solution implements Q002SmartElevatorGroupInterface {
 
 
 class Lift {
+    private final int id;
     private int currentFloor;
-    private ArrayList<LiftRequest> requests;
+    private final RequestManager requestManager;
     private LiftState movingUpState,
             movingDownState, idleState, state;
 
-    Lift(){
-        requests = new ArrayList<LiftRequest>();
-        movingUpState = new MovingUpState(this);
-        movingDownState = new MovingDownState(this);
-        idleState = new IdleState(this);
-        state = idleState;
+    Lift(int id, RequestManager requestManager) {
+        this.id = id;
+        this.requestManager = requestManager;
+        this.currentFloor = 0;
+        this.movingUpState = new MovingUpState(this);
+        this.movingDownState = new MovingDownState(this);
+        this.idleState = new IdleState(this);
+        this.state = idleState;
     }
 
     public boolean hasStopInOppositeDirection() {
@@ -109,7 +102,7 @@ class Lift {
         if (direction == 'I') {
             return false;
         }
-        for (LiftRequest request : requests) {
+        for (LiftRequest request : requestManager.getRequestsForLift(id)) {
             if (request.getMoveDirection() != state.getDirection()) {
                 return true;
             }
@@ -122,8 +115,7 @@ class Lift {
     }
 
     boolean hasStop(int floor , char moveDirection){
-        for(int i=0;i<requests.size();i++){
-            LiftRequest request = requests.get(i);
+        for(LiftRequest request: requestManager.getRequestsForLift(id)){
             if(request.getStartFloor()==floor
                     || request.getDestinationFloor()==floor){
                 if(moveDirection == request.getMoveDirection())
@@ -138,7 +130,7 @@ class Lift {
      */
     public int countPeople(int floor, char direction){
         int people=0;
-        for(LiftRequest request: requests)
+        for(LiftRequest request: requestManager.getRequestsForLift(id))
             if(request.getMoveDirection()==direction){
                 if(direction=='U' && floor>=request.getStartFloor()
                         && floor<request.getDestinationFloor()) people++;
@@ -175,13 +167,14 @@ class Lift {
     }
 
     void updateLiftState(){
-        if(requests.size()==0||state.getDirection()=='I'){
+        List<LiftRequest> requests = requestManager.getRequestsForLift(id);
+        if(requests.isEmpty()||state.getDirection()=='I'){
             setState('I');
             return;
         }
         state.updateFloor();
         updateRequests();
-        if (requests.size() == 0) state = idleState;
+        if (requests.isEmpty()) state = idleState;
         else state.updateDirection();
     }
 
@@ -189,9 +182,9 @@ class Lift {
     public void updateRequests(){
         char direction = state.getDirection();
         if(direction=='I') return;
-        ArrayList<LiftRequest> newRequests = new ArrayList<>();
+        List<LiftRequest> newRequests = new ArrayList<>();
         // removing old requests
-        for(LiftRequest request: requests){
+        for(LiftRequest request: requestManager.getRequestsForLift(id)){
             if(direction==request.getMoveDirection()){
                 boolean liftPassedDestinationGoingUp = direction=='U' &&
                         currentFloor>=request.getDestinationFloor();
@@ -203,13 +196,17 @@ class Lift {
             }
             newRequests.add(request);
         }
-        requests= newRequests;
+        if (!newRequests.isEmpty()) {
+            requestManager.removeCompletedRequest(id, newRequests.get(newRequests.size() - 1));
+        }
+        requestManager.getRequestsForLift(id).clear();
+        requestManager.getRequestsForLift(id).addAll(newRequests);
     }
 
     void addRequest(int start, int destination){
-        requests.add(new LiftRequest(start, destination));
-        if(requests.size()==1){
-            char direction = requests.get(0).getMoveDirection();
+        requestManager.addRequest(start, destination);
+        if(requestManager.getRequestsForLift(id).size()==1){
+            char direction = requestManager.getRequestsForLift(id).get(0).getMoveDirection();
             if(start>currentFloor) direction='U';
             if(start<currentFloor) direction='D';
             setState(direction);
@@ -230,7 +227,7 @@ class Lift {
 
 
     public List<LiftRequest> getRequests() {
-        return requests;
+        return requestManager.getRequestsForLift(id);
     }
 
     public void setCurrentFloor(int currentFloor){
@@ -415,3 +412,100 @@ class IdleState extends LiftState{
  void print(String s){System.out.print(s);}
  void println(String s){System.out.println(s);}
  }
+
+class RequestManager {
+    private final Map<Integer, Queue<LiftRequest>> liftRequests;
+    private final PriorityQueue<LiftRequest> pendingRequests;
+    private final Lift[] lifts;
+    private static final int MAX_PEOPLE_PER_LIFT = 10;
+
+    public RequestManager(Lift[] lifts) {
+        this.lifts = lifts;
+        this.liftRequests = new HashMap<>();
+        this.pendingRequests = new PriorityQueue<>((r1, r2) -> r1.getStartFloor() - r2.getStartFloor());
+        
+        for(int i = 0; i < lifts.length; i++) {
+            liftRequests.put(i, new LinkedList<>());
+        }
+    }
+
+    public int addRequest(int startFloor, int destinationFloor) {
+        LiftRequest request = new LiftRequest(startFloor, destinationFloor);
+        int bestLift = findBestLiftForRequest(request);
+        if (bestLift != -1) {
+            assignRequestToLift(request, bestLift);
+        }
+        return bestLift;
+    }
+
+    private int findBestLiftForRequest(LiftRequest request) {
+        int bestLift = -1;
+        int minTime = Integer.MAX_VALUE;
+
+        for (int i = 0; i < lifts.length; i++) {
+            Lift lift = lifts[i];
+            int timeToReach = calculateTimeToReach(lift, request);
+            if (timeToReach >= 0 && timeToReach < minTime && hasCapacity(i, request)) {
+                minTime = timeToReach;
+                bestLift = i;
+            }
+        }
+        return bestLift;
+    }
+
+    private boolean hasCapacity(int liftId, LiftRequest request) {
+        Queue<LiftRequest> requests = liftRequests.get(liftId);
+        int maxPeople = 0;
+        
+        for (int floor = request.getStartFloor(); 
+             floor != request.getDestinationFloor(); 
+             floor += (request.getMoveDirection() == 'U' ? 1 : -1)) {
+            
+            int peopleAtFloor = countPeopleAtFloor(requests, floor, request.getMoveDirection());
+            maxPeople = Math.max(maxPeople, peopleAtFloor);
+        }
+        
+        return maxPeople < MAX_PEOPLE_PER_LIFT;
+    }
+
+    private int countPeopleAtFloor(Queue<LiftRequest> requests, int floor, char direction) {
+        int count = 0;
+        for (LiftRequest req : requests) {
+            if (req.getMoveDirection() == direction) {
+                if (direction == 'U' && floor >= req.getStartFloor() 
+                    && floor < req.getDestinationFloor()) {
+                    count++;
+                } else if (direction == 'D' && floor <= req.getStartFloor() 
+                    && floor > req.getDestinationFloor()) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    private int calculateTimeToReach(Lift lift, LiftRequest request) {
+        return lift.getTimeToReachFloor(request.getStartFloor(), request.getMoveDirection());
+    }
+
+    private void assignRequestToLift(LiftRequest request, int liftId) {
+        liftRequests.get(liftId).add(request);
+        if (lifts[liftId].getMoveDirection() == 'I') {
+            char direction = request.getStartFloor() < lifts[liftId].getCurrentFloor() ? 'D' : 'U';
+            lifts[liftId].setState(direction);
+        }
+    }
+
+    public List<LiftRequest> getRequestsForLift(int liftId) {
+        return new ArrayList<>(liftRequests.get(liftId));
+    }
+
+    public void removeCompletedRequest(int liftId, LiftRequest request) {
+        liftRequests.get(liftId).remove(request);
+    }
+
+    public void optimizeRequests() {
+        // Implement request optimization logic here
+        // For example, reassigning requests between lifts for better efficiency
+    }
+}
